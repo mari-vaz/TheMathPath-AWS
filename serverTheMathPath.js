@@ -481,6 +481,9 @@ app.post('/jogar', (req, res) => {
   //Montando filtro de busca para query baseado nas escolhas e perfil do jogador
   var filtroBuscaQuestoes = serieServer+flagModuloServer+flagDificuldadeServer;
 
+  //Declarando variável para recuperar e enviar o índice posteriormente
+  var indice;
+
   //Recuperando resultados do banco baseado no filtro
   MongoClient.connect(url, function(err, db) {
     if (err) throw err;
@@ -556,12 +559,13 @@ app.post('/jogar', (req, res) => {
         dbo.collection("JOGADAS").find(query).toArray(function(err, result) {
           if (err) throw err;
           flagWinStreakServerLocal = result[0].flagWinStreak;
+          indice = result[0].indice;
 
           //Instanciando variável flagWinStreakServer global com a local
           flagWinStreakServer = flagWinStreakServerLocal;
 
           //Montando JSON para envio ao client, com a flag
-          res.send({ enunciado: envioEnunciado, alternativas: alternativasJSON, resolucao: envioResolucao, filtro: envioFiltro, flagWinStreak: flagWinStreakServerLocal });
+          res.send({ enunciado: envioEnunciado, alternativas: alternativasJSON, resolucao: envioResolucao, filtro: envioFiltro, flagWinStreak: flagWinStreakServerLocal, indice: indice });
         });
       });
 
