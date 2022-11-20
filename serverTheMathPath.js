@@ -258,7 +258,7 @@ app.post('/verificaJogada', (req, res) => {
                   res.json(envioServer);
                 });
               });
-            } else if (result.length == 0){
+            } else {
                //Inserindo índice 0 e listaQuestoes em caso do jogador não ter explorado esse mapa ainda
               MongoClient.connect(url, function(err, db) {
                 if (err) throw err;
