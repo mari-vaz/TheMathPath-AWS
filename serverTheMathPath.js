@@ -234,9 +234,9 @@ app.post('/verificaJogada', (req, res) => {
           if (err) throw err;
           var dbo = db.db(myDatabase);
           var query = { filtro: filtroQuestao };
-          dbo.collection("QUESTOES").find(query).toArray(function(err, result) {
+          dbo.collection("QUESTOES").find(query).toArray(function(err, resultQuestoes) {
             if (err) throw err;
-            listaQuestoes = randomize(result.length);
+            listaQuestoes = randomize(resultQuestoes.length);
 
             //zerando jogada e pegando novo valorLista
             indiceServer = 0;
@@ -575,67 +575,6 @@ app.post('/jogar', (req, res) => {
 
 }); //end of jogar
 
-//Função de randomização da ordem
-function randomize(max){
-
-  //Gerando lista ordenada
-  let list = [];
-
-  for (let i = 0; i < max; i++) {
-    list[i] = i;
-  }
-  //console.log("lista original: "+list); 
-
-  //Randomizando a lista
-  let randomNumber;
-  let tmp;
-  
-  for (let i = list.length; i;) {
-      randomNumber = Math.random() * i-- | 0;
-      tmp = list[randomNumber];
-      // troca o número aleatório pelo atual
-      list[randomNumber] = list[i];
-      // troca o atual pelo aleatório
-      list[i] = tmp;
-  }
-  //console.log("nova lista: "+list);
-  return(list);
-
-} //end of randomize
-
-function incrementaMoedas(email,qtd){
-  
-  var moedasServer;
-
-  //Leitura das moedas dos USUARIOS
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db(myDatabase);
-    var query = { _id: email };
-    dbo.collection("USUARIOS").find(query).toArray(function(err, result) {
-      if (err) throw err;
-
-      //Incrementando moedas
-      moedasServer = result[0].moedas;
-      moedasServer = moedasServer + qtd;      
-
-      //Atualizando quantidade de moedas dos USUARIOS
-      MongoClient.connect(url, function(err, db) {
-        if (err) throw err;
-        var dbo = db.db(myDatabase);
-        var newvalues = { $set: { moedas: moedasServer } };
-        dbo.collection("USUARIOS").updateOne(query, newvalues, function(err, result) {
-          if (err) throw err;
-
-          console.log("Moedas atualizadas com sucesso.");
-        });
-      }); //end of connect. update
-
-      db.close();
-    });
-  }); //end of connect. find
-} //end of incrementaMoedas
-
 app.post('/lerPerfil', (req, res) => {
   console.log("\n---Rota lerPerfil---");
   console.log('Got body:', req.body);
@@ -744,5 +683,90 @@ app.post('/atualizaMochila', (req, res) => {
 
 }); //end of atualizaMochila
 
+app.post('/limparJogada', (req, res) => {
+  console.log("\n---Rota limparJogada---");
+  console.log('Got body:', req.body);
+
+  //Recebendo filtro 
+  var parametrosServer = req.body.parametros;
+
+  //Excluindo registro após o jogador completar a fase
+  MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db(myDatabase);
+    var myquery = { _id: parametrosServer };
+    dbo.collection("JOGADAS").deleteOne(myquery, function(err, obj) {
+      if (err) throw err;
+      console.log("Jogada deletada com sucesso.");
+
+      res.send("Jogada deletada com sucesso.")
+      db.close();
+    });
+  });
+
+}); //end of limparJogada
+
+// ======= FUNÇÕES INDIVIDUAIS =======
+
+//Função de randomização da ordem
+function randomize(max){
+
+  //Gerando lista ordenada
+  let list = [];
+
+  for (let i = 0; i < max; i++) {
+    list[i] = i;
+  }
+  //console.log("lista original: "+list); 
+
+  //Randomizando a lista
+  let randomNumber;
+  let tmp;
+  
+  for (let i = list.length; i;) {
+      randomNumber = Math.random() * i-- | 0;
+      tmp = list[randomNumber];
+      // troca o número aleatório pelo atual
+      list[randomNumber] = list[i];
+      // troca o atual pelo aleatório
+      list[i] = tmp;
+  }
+  //console.log("nova lista: "+list);
+  return(list);
+
+} //end of randomize
+
+function incrementaMoedas(email,qtd){
+  
+  var moedasServer;
+
+  //Leitura das moedas dos USUARIOS
+  MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db(myDatabase);
+    var query = { _id: email };
+    dbo.collection("USUARIOS").find(query).toArray(function(err, result) {
+      if (err) throw err;
+
+      //Incrementando moedas
+      moedasServer = result[0].moedas;
+      moedasServer = moedasServer + qtd;      
+
+      //Atualizando quantidade de moedas dos USUARIOS
+      MongoClient.connect(url, function(err, db) {
+        if (err) throw err;
+        var dbo = db.db(myDatabase);
+        var newvalues = { $set: { moedas: moedasServer } };
+        dbo.collection("USUARIOS").updateOne(query, newvalues, function(err, result) {
+          if (err) throw err;
+
+          console.log("Moedas atualizadas com sucesso.");
+        });
+      }); //end of connect. update
+
+      db.close();
+    });
+  }); //end of connect. find
+} //end of incrementaMoedas
 
  app.listen(3333, () => console.log('Started server at http://localhost:3333!'));
